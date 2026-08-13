@@ -19,6 +19,7 @@ services:
     restart: unless-stopped
     environment:
       INTERVAL_SECONDS: "900"
+      BOT_MODE: ${BOT_MODE:-}   # пусто = берётся из routing.yaml (assign). suggest — вернуть подсказки без PR
       # Ниже — из окружения стека Portainer (не хранить в git):
       DISCOURSE_API_KEY: ${DISCOURSE_API_KEY}
       DISCOURSE_API_USERNAME: ${DISCOURSE_API_USERNAME:-support_bot}
