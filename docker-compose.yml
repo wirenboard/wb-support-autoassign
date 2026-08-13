@@ -12,7 +12,9 @@
 services:
   wb-autoassign:
     build: .
-    image: wb-support-autoassign:latest
+    # НЕ указывать image: <name> — иначе Portainer «Pull and redeploy» пытается
+    # тянуть его из реестра (pull access denied). Только build → образ собирается локально.
+    pull_policy: build          # всегда собирать из Dockerfile, никогда не pull
     container_name: wb-autoassign
     restart: unless-stopped
     environment:
