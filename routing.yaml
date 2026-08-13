@@ -52,7 +52,7 @@ bot:
   explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
   state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
   # ИИ-мозг: OpenAI-совместимый endpoint, настройки в env (см. .env.example):
-  # AI_API_KEY, AI_MODEL (реком. gpt-5-chat-latest), AI_BASE_URL, опц. AI_TEMPERATURE/AI_REASONING_EFFORT.
+  # AI_API_KEY, AI_MODEL (реком. gpt-5.6-sol), AI_BASE_URL, опц. AI_TEMPERATURE/AI_REASONING_EFFORT.
   # Нет ключа / ошибка / ответ не прошёл гейты → автоматический откат на правила.
   spam:
     enabled: true
