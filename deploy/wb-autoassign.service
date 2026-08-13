@@ -1,0 +1,12 @@
+# systemd user-unit: один проход бота. Ставится в ~/.config/systemd/user/
+# вместе с wb-autoassign.timer (см. README).
+[Unit]
+Description=WB support autoassign (one pass)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/wb-support-autoassign
+EnvironmentFile=%h/wb-support-autoassign/.env
+ExecStart=/usr/bin/env node autoassign.mjs

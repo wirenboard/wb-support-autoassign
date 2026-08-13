@@ -1,0 +1,19 @@
+# Секреты и рантайм — НИКОГДА не коммитить
+.env
+*.pem
+*.key
+id_ed25519*
+id_rsa*
+state.json
+data/
+node_modules/
+last-run.txt
+# рабочие выгрузки портала и тест-фикстуры — содержат реальный клиентский текст, в git не тащим
+live-feed.json
+live-presence.json
+live.b64
+*.b64
+portal-feed.json
+presence.json
+test-feed.json
+test-presence.json

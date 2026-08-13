@@ -1,0 +1,23 @@
+# В образ идут только код, package*.json и routing.yaml (см. Dockerfile).
+.git
+.gitignore
+node_modules
+.env
+.env.example
+data
+deploy
+README.md
+# рабочие/тестовые артефакты
+live-feed.json
+live-presence.json
+live.b64
+presence.json
+portal-feed.json
+test-feed.json
+test-presence.json
+last-run.txt
+now.mjs
+table.mjs
+debug-one.mjs
+dry-run.mjs
+*.b64

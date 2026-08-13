@@ -1,0 +1,31 @@
+# Portainer stack для wb-support-autoassign.
+# Деплой: Portainer → Stacks → Add stack → из этого репозитория (Git) или вставкой compose.
+#
+# Секреты НЕ в git. Задать их в Portainer → Stack → Environment variables
+# (или положить рядом .env, если деплой не из git):
+#   DISCOURSE_API_KEY, DISCOURSE_API_USERNAME, PORTAL_URL,
+#   AI_API_KEY, AI_MODEL, AI_BASE_URL
+#
+# Важно: аккаунт DISCOURSE_API_USERNAME должен быть STAFF (модератор) —
+# без этого недоступны скрытые сообщения (whisper) и категория «Для сотрудников».
+
+services:
+  wb-autoassign:
+    build: .
+    image: wb-support-autoassign:latest
+    container_name: wb-autoassign
+    restart: unless-stopped
+    environment:
+      INTERVAL_SECONDS: "900"
+      # Ниже — из окружения стека Portainer (не хранить в git):
+      DISCOURSE_API_KEY: ${DISCOURSE_API_KEY}
+      DISCOURSE_API_USERNAME: ${DISCOURSE_API_USERNAME:-support_bot}
+      PORTAL_URL: ${PORTAL_URL:-https://support.wirenboard.com}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com}
+    volumes:
+      - autoassign-data:/app/data      # state.json + spam-review.jsonl переживают перезапуск
+
+volumes:
+  autoassign-data:

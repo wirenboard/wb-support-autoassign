@@ -1,0 +1,201 @@
+# routing.yaml — черновик конфига автораспределения тем портала ТП
+#
+# Источники:
+#   - таблица навыков (снимок 2026-08-12)
+#   - query 24 Data Explorer (portal usernames + загрузка)
+#   - categories.json / tags.json портала
+#
+# ПРОВЕРИТЬ РУКАМИ:
+#   1. Цифры в skills — переносил из Google Sheets, пустые колонки могли
+#      сместить значения на соседа.
+#   2. auto: у Кильпио поставил false (3 темы против 10-115 у остальных —
+#      похоже, вне ротации). Поправьте, если нет.
+#   3. Теги в domains — вписал существующие на портале, список не полный.
+
+thresholds:
+  primary: 3      # оценка 3 — основной пул
+  reserve: 2      # оценка 2 — только если ни одной тройки в сети
+  min_domain_score: 4   # слабее (одно слово в тексте) — считаем «не уверен» → по загрузке/ИИ
+  # 0, 1 и пусто — по этому домену не назначаем никогда.
+  # пусто (null) != 0: null означает «не заполнял», при апдейте матрицы
+  # человек может оказаться компетентным — не хороним.
+
+presence:
+  online_within_minutes: 45    # last_seen_at не старше → считаем «в сети»
+  working_hours: "10:00-18:00"
+  tz: Europe/Moscow
+  # last_seen_at не знает про отпуска. Пока: ручной флаг away в engineers.
+  # Дальше можно цеплять календарь отпусков, если он есть в машиночитаемом виде.
+
+load:
+  # НЕ raw active assignments: там кладбище (у BrainRoot 115 живых назначений).
+  # Считаем темы с постами за окно — реальная текущая нагрузка.
+  metric: assigned_topics_with_activity
+  window_days: 7
+
+# Фолбэк: никого подходящего в сети → дежурный (duty) в режиме assign,
+# в suggest — скрытое сообщение «нужен ручной разбор».
+# Группу support НЕ использовать: в ней ~70 человек включая ботов — уведомит всех.
+duty: null   # portal username дежурного; менять при передаче дежурства
+
+bot:
+  mode: suggest              # off | suggest (скрытые сообщения) | assign (боевой)
+  brain: ai                  # ai — ИИ-оператор решает в рамках гейтов | rules — только ключевики
+  feed_query: 53             # autoassign_feed — неразобранные темы (public + ЛС группы support)
+  presence_query: 54         # autoassign_presence — присутствие + загрузка за окно
+  feed_days: 4
+  min_topic_age_minutes: 15  # молодые темы не трогаем — шанс взять руками
+  enforce_working_hours: true
+  explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
+  state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
+  # ИИ-мозг: OpenAI-совместимый endpoint (OpenAI, DeepSeek, ...), настройки в env:
+  # AI_API_KEY, AI_MODEL (например gpt-4o-mini или deepseek-chat), AI_BASE_URL.
+  # Нет ключа / ошибка / ответ не прошёл гейты → автоматический откат на правила.
+  spam:
+    enabled: true
+    min_score: 4          # порог detectSpam; консервативно, чтобы не флажить живых клиентов
+    # Спам НИКОГДА не удаляем и не закрываем сами. Только помечаем на ручную проверку:
+    #   1) скрытое сообщение в теме «подозрение на спам» (видят модераторы),
+    #   2) строка в review_log,
+    #   3) если задан review_topic_id — дубль списком в служебную тему (удобно глазами).
+    review_log: data/spam-review.jsonl
+    review_topic_id: 41381 # тема «🤖 Спам на проверку», категория «Для сотрудников» (staff-only)
+
+gates:
+  # Жёсткие гейты: не входишь — не назначаем, даже если больше некому.
+  # Английские темы идут ТОЛЬКО этим троим (строка «Англоязычные письма»).
+  # Елена и Кильпио при этом в общей ротации не участвуют (auto: false) —
+  # им достаются только англоязычные.
+  english:
+    engineers: [Bringer, JackDallas, Alexander_Kuznetsov]
+
+engineers:
+  Bringer:              {name: Елена Савченко,      tg: "@Dominatorrrrr",       auto: false, away: false}  # только EN
+  BrainRoot:            {name: Андрей Радионов,     tg: "@brainroot",           auto: true,  away: false}
+  Aleksandr_Khlebnikov: {name: Александр Хлебников, tg: "@MicroVolk",           auto: true,  away: false}
+  DmitryKur:            {name: Дмитрий Курятников,  tg: "@dmitykur",            auto: true,  away: false}
+  JackDallas:           {name: Александр Кильпио,   tg: "@jackdallas",          auto: false, away: false}  # только EN
+  Alexey_Zhabrovets:    {name: Алексей Жабровец,    tg: "@alexey_zhabrovets",   auto: true,  away: false}
+  Alexander_Kuznetsov:  {name: Александр Кузнецов,  tg: "@wonder_over_yonder",  auto: true,  away: false}  # EN + общая
+  Understarfall:        {name: Сергей Шишенко,      tg: "@understarfall",       auto: true,  away: false}
+  enginPetr:            {name: Пётр Скорик,         tg: "@enginPetr",           auto: true,  away: false}
+
+# Оценки 0-3 из матрицы. Порядок людей везде одинаковый.
+# ~ (null) = пустая ячейка в таблице.
+skills:
+  #                 Bringer BrainRoot Khlebnikov DmitryKur JackDallas Zhabrovets Kuznetsov Understarfall enginPetr
+  modbus:          {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 3, JackDallas: 3, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 3, Understarfall: 3, enginPetr: 2}
+  mqtt:            {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 3, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  wb-rules:        {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 1}
+  linux:           {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 3, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 1, enginPetr: 2}
+  # backup: со слов юзера тянут Хлебников и Радионов (3); linux-компетентным — резерв 2
+  backup:          {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 3, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  network:         {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: 2}
+  zigbee:          {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  zwave:           {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 0, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
+  knx:             {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: 1, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 3, Understarfall: 0, enginPetr: ~}
+  dali:            {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: 0, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: 0}
+  snmp:            {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 1, Understarfall: 1, enginPetr: ~}
+  bacnet:          {Bringer: ~, BrainRoot: ~, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: ~, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 3, Understarfall: 0, enginPetr: ~}
+  spodes:          {Bringer: 1, BrainRoot: 1, Aleksandr_Khlebnikov: 0, DmitryKur: 2, JackDallas: ~, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
+  home-assistant:  {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  node-red:        {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  grafana:         {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 3, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 0, Understarfall: 1, enginPetr: ~}
+  zabbix:          {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: 1}
+  alisa:           {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: ~}
+  codesys-iec:     {Bringer: 3, BrainRoot: ~, Aleksandr_Khlebnikov: 0, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 3, Understarfall: 3, enginPetr: 1}
+  electrical:      {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 1, Understarfall: 3, enginPetr: 2}
+  wb6-legacy:      {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 0, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: 1}
+  wb-modems:       {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  wbio:            {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  internal-modules: {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  cloud:           {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  map:             {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 1, Understarfall: 0, enginPetr: ~}
+  mwac:            {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 3, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  hw-selection:    {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: ~}
+  heating:         {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 1, Understarfall: 3, enginPetr: ~}
+  batteries:       {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
+
+# Как тема попадает в домен. Порядок сигналов:
+#   1. теги (если уже стоят), 2. категория, 3. ключевые слова в заголовке+первом посте,
+#   4. ничего не сработало → ИИ-классификатор, 5. и он не уверен → дежурный.
+domains:
+  modbus:
+    categories: [wb-modbus-peripherals]        # id 10, Периферийные устройства
+    tags: [modbus, wb-mqtt-serial, mr, mdm3, wb-led, wb-msw]
+    # kw матчатся от границы слова с открытым хвостом: 'wb-m' покрывает всю линейку wb-mr/mdm/msw/mge/mai
+    keywords: [modbus, регистр, rs-485, rs485, crc, "не отвечает", опрос, wb-mqtt-serial, шаблон, msw, wb-msw, wb-m, wb-led, mai6, частотн]
+  mqtt:
+    tags: [mqtt]
+    keywords: [mosquitto, брокер, топик]
+  wb-rules:
+    tags: [wb-rules]
+    keywords: [defineRule, правило, скрипт, виртуальное устройство]
+  linux:
+    categories: [wiren-board]                  # id 17, Контроллеры — дефолт домена
+    keywords: [ssh, консоль, apt, обновлен, testing, корнев, места нет, перезагружается]
+  backup:
+    # 'резервн' — стем, ловит «резервную/резервная/резервное копирование»
+    keywords: [бэкап, резервн, backup, wb-backup, снапшот, восстановлен, "образ системы"]
+  network:
+    keywords: [wi-fi, wifi, сеть, ip, eth, networkmanager, network-manager, vpn, интернет, не пингуется]
+  zigbee:
+    tags: [zigbee, zigbee2mqtt]
+    keywords: [zigbee]
+  zwave:
+    tags: [z-wave]
+    keywords: [z-wave, zwave, z-way]
+  knx:
+    tags: [knx]
+    keywords: [knx, knxd]
+  dali:
+    keywords: [dali]
+  snmp:
+    keywords: [snmp]
+  bacnet:
+    keywords: [bacnet]
+  spodes:
+    keywords: [сподэс, длмс, dlms, счётчик электроэнергии меркурий]
+  home-assistant:
+    tags: [home-assistant]
+    keywords: [home assistant, homeassistant, hacs]
+  node-red:
+    tags: [node-red]
+    keywords: [node-red, nodered]
+  grafana:
+    tags: [grafana]
+    keywords: [grafana, дашборд]
+  zabbix:
+    tags: [zabbix]
+    keywords: [zabbix]
+  alisa:
+    keywords: [алис, яндекс]   # 'алис' — стем, ловит «Алисой/Алисе»
+  codesys-iec:
+    keywords: [codesys, кодесис, мэк 61131, fbd, ladder]
+  electrical:
+    # «автомат» голым словом нельзя — ловит «автоматизацию»
+    keywords: [монтаж, подключить питание, блок питания, узо, дифавтомат, автоматический выключатель, заземление]
+  wb6-legacy:
+    tags: [wb5, wb6]
+    keywords: [wb5, wb6, wiren board 5, wiren board 6]
+  wb-modems:
+    keywords: [модем, sim, симк, sms, 4g, lte, gsm, мобильн, wbc-4g, wbc-3g]
+  wbio:
+    keywords: [wbio, модуль расширения]
+  internal-modules:
+    keywords: [wbe2, внутренний модуль, hdmi]
+  cloud:
+    keywords: [облак, wirenboard.cloud, cloud, телеметрия]
+  map:
+    tags: [map]
+    keywords: [map12, map6, map3, счётчик электроэнергии, трансформатор тока]
+  mwac:
+    keywords: [mwac, протечк, счётчик воды, нептун]
+  hw-selection:
+    categories: [right-hardware]               # id 28, Подбор оборудования
+    tags: [подбор]
+    keywords: [подбор, подобрать, подберите, посоветуйте, какой контроллер выбрать]
+  heating:
+    keywords: [отоплени, теплый пол, тёплый пол, котёл, котел, термостат, терморегулятор]
+  batteries:
+    keywords: [батарейк, суперкап, ибп, wb-ups]

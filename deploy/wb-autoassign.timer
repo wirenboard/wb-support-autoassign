@@ -1,0 +1,10 @@
+# Каждые 15 минут; рабочие часы бот проверяет сам (enforce_working_hours).
+[Unit]
+Description=WB support autoassign every 15 min
+
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target
