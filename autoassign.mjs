@@ -30,6 +30,7 @@ import { CAT_SLUG, detectLang, classify, pick, poolFor, detectSpam } from './lib
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const cfg = YAML.parse(fs.readFileSync(path.join(ROOT, 'routing.yaml'), 'utf8'));
 const bot = cfg.bot ?? {};
+if (process.env.BOT_MODE) bot.mode = process.env.BOT_MODE;   // env перебивает routing.yaml: off|suggest|assign
 
 const argv = process.argv.slice(2);
 const DRY = argv.includes('--dry');

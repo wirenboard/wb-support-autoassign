@@ -39,7 +39,7 @@ load:
 duty: null   # portal username дежурного; менять при передаче дежурства
 
 bot:
-  mode: suggest              # off | suggest (скрытые сообщения) | assign (боевой)
+  mode: assign               # off | suggest (скрытые сообщения) | assign (боевой). Перебивается env BOT_MODE.
   brain: ai                  # ai — ИИ-оператор решает в рамках гейтов | rules — только ключевики
   feed_query: 53             # autoassign_feed — неразобранные темы (public + ЛС группы support)
   presence_query: 54         # autoassign_presence — присутствие + загрузка за окно
