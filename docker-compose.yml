@@ -24,7 +24,7 @@ services:
       DISCOURSE_API_USERNAME: ${DISCOURSE_API_USERNAME:-support_bot}
       PORTAL_URL: ${PORTAL_URL:-https://support.wirenboard.com}
       AI_API_KEY: ${AI_API_KEY:-}
-      AI_MODEL: ${AI_MODEL:-gpt-5-chat-latest}
+      AI_MODEL: ${AI_MODEL:-gpt-5.6-sol}
       AI_BASE_URL: ${AI_BASE_URL:-https://api.openai.com}
       AI_TEMPERATURE: ${AI_TEMPERATURE:-}       # пусто = дефолт модели (для reasoning-GPT-5 не задавать)
       AI_REASONING_EFFORT: ${AI_REASONING_EFFORT:-}  # low|medium|high — только для reasoning-версий

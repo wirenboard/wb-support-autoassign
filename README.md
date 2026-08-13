@@ -61,7 +61,7 @@ DISCOURSE_API_KEY=<гранулярный ключ: Data Explorer run + Assign>
 DISCOURSE_API_USERNAME=support_bot
 PORTAL_URL=https://support.wirenboard.com
 AI_API_KEY=<OpenAI-совместимый>
-AI_MODEL=gpt-5-chat-latest          # reasoning-вариант: gpt-5.2 + AI_REASONING_EFFORT
+AI_MODEL=gpt-5.6-sol          # reasoning-вариант: актуальный reasoning-id + AI_REASONING_EFFORT
 AI_BASE_URL=https://api.openai.com
 ```
 
