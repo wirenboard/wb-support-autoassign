@@ -72,9 +72,15 @@ async function api(p, { method = 'GET', body, form } = {}) {
 const toObjects = res => res.rows.map(r => Object.fromEntries(res.columns.map((c, i) => [c, r[i]])));
 
 async function runQuery(id, params) {
-  const res = await api(`/admin/plugins/explorer/queries/${id}/run`, {
+  // Если запросы расшарены на группу (bot.explorer_group) — гоняем через групповой
+  // эндпоинт: его может вызывать член группы БЕЗ прав админа. /admin/... требует admin.
+  const grp = bot.explorer_group;
+  const path = grp
+    ? `/g/${grp}/reports/${id}/run`
+    : `/admin/plugins/explorer/queries/${id}/run`;
+  const res = await api(path, {
     method: 'POST',
-    form: { params: JSON.stringify(params), explain: 'false', limit: '100' },
+    form: { params: JSON.stringify(params), limit: '100' },
   });
   if (!res?.success) throw new Error(`query ${id}: ${JSON.stringify(res).slice(0, 200)}`);
   return toObjects(res);
