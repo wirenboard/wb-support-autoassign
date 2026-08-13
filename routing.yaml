@@ -48,8 +48,8 @@ bot:
   enforce_working_hours: true
   explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
   state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
-  # ИИ-мозг: OpenAI-совместимый endpoint (OpenAI, DeepSeek, ...), настройки в env:
-  # AI_API_KEY, AI_MODEL (например gpt-4o-mini или deepseek-chat), AI_BASE_URL.
+  # ИИ-мозг: OpenAI-совместимый endpoint, настройки в env (см. .env.example):
+  # AI_API_KEY, AI_MODEL (реком. gpt-5-chat-latest), AI_BASE_URL, опц. AI_TEMPERATURE/AI_REASONING_EFFORT.
   # Нет ключа / ошибка / ответ не прошёл гейты → автоматический откат на правила.
   spam:
     enabled: true

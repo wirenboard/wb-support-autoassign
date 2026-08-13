@@ -137,13 +137,21 @@ async function decideAI(topic, lang, candidates) {
     `Тема${lang === 'en' ? ' (на английском — пул уже сужен до англоговорящих)' : ''}: «${topic.title}»\n\n` +
     `Первое сообщение клиента:\n${topic.excerpt.slice(0, 1200)}`;
 
+  // temperature/reasoning_effort шлём ТОЛЬКО если заданы в env: reasoning-модели
+  // GPT-5 (gpt-5.x) отклоняют temperature≠default, а чат-модели не знают reasoning_effort.
+  // По умолчанию не шлём ни то, ни другое — работает на любой GPT-5 и на gpt-4o.
+  const payload = {
+    model,
+    response_format: { type: 'json_object' },
+    messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }],
+  };
+  if (process.env.AI_TEMPERATURE) payload.temperature = Number(process.env.AI_TEMPERATURE);
+  if (process.env.AI_REASONING_EFFORT) payload.reasoning_effort = process.env.AI_REASONING_EFFORT;
+
   const r = await fetch(base + '/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model, temperature: 0, response_format: { type: 'json_object' },
-      messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }],
-    }),
+    body: JSON.stringify(payload),
   });
   if (!r.ok) throw new Error(`AI ${r.status}: ${(await r.text()).slice(0, 150)}`);
   const j = await r.json();
