@@ -22,7 +22,9 @@ thresholds:
 
 presence:
   online_within_minutes: 45    # last_seen_at не старше → считаем «в сети»
-  working_hours: "10:00-18:00"
+  working_hours: "07:30-20:00" # ГЛОБАЛЬНОЕ окно бота = объединение всех смен (Кузнецов с 7:30,
+                               # Кильпио до 20:00). Вне него бот вообще не работает. Персональные
+                               # смены — в engineers.<u>.hours, они и режут кандидатов внутри окна.
   tz: Europe/Moscow
   # last_seen_at не знает про отпуска. Пока: ручной флаг away в engineers.
   # Дальше можно цеплять календарь отпусков, если он есть в машиночитаемом виде.
@@ -72,16 +74,18 @@ gates:
   english:
     engineers: [Bringer, JackDallas, Alexander_Kuznetsov]
 
+# hours: персональная смена по МСК; вне неё инженеру темы не назначаются даже если он онлайн.
+# null → без ограничения (по глобальному окну presence.working_hours).
 engineers:
-  Bringer:              {name: Елена Савченко,      tg: "@Dominatorrrrr",       auto: false, away: false}  # только EN
-  BrainRoot:            {name: Андрей Радионов,     tg: "@brainroot",           auto: true,  away: false}
-  Aleksandr_Khlebnikov: {name: Александр Хлебников, tg: "@MicroVolk",           auto: true,  away: false}
-  DmitryKur:            {name: Дмитрий Курятников,  tg: "@dmitykur",            auto: true,  away: false}
-  JackDallas:           {name: Александр Кильпио,   tg: "@jackdallas",          auto: false, away: false}  # только EN
-  Alexey_Zhabrovets:    {name: Алексей Жабровец,    tg: "@alexey_zhabrovets",   auto: true,  away: false}
-  Alexander_Kuznetsov:  {name: Александр Кузнецов,  tg: "@wonder_over_yonder",  auto: true,  away: false}  # EN + общая
-  Understarfall:        {name: Сергей Шишенко,      tg: "@understarfall",       auto: true,  away: false}
-  enginPetr:            {name: Пётр Скорик,         tg: "@enginPetr",           auto: true,  away: false}
+  Bringer:              {name: Елена Савченко,      tg: "@Dominatorrrrr",       auto: false, away: false, hours: "10:00-19:00"}  # только EN
+  BrainRoot:            {name: Андрей Радионов,     tg: "@brainroot",           auto: true,  away: false, hours: "10:00-19:00"}
+  Aleksandr_Khlebnikov: {name: Александр Хлебников, tg: "@MicroVolk",           auto: true,  away: false, hours: "08:00-17:00"}
+  DmitryKur:            {name: Дмитрий Курятников,  tg: "@dmitykur",            auto: true,  away: false, hours: "08:00-17:00"}
+  JackDallas:           {name: Александр Кильпио,   tg: "@jackdallas",          auto: false, away: false, hours: "11:00-20:00"}  # только EN
+  Alexey_Zhabrovets:    {name: Алексей Жабровец,    tg: "@alexey_zhabrovets",   auto: true,  away: false, hours: "08:00-16:00"}
+  Alexander_Kuznetsov:  {name: Александр Кузнецов,  tg: "@wonder_over_yonder",  auto: true,  away: false, hours: "07:30-16:00"}  # EN + общая
+  Understarfall:        {name: Сергей Шишенко,      tg: "@understarfall",       auto: true,  away: false, hours: null}          # ЧАСЫ НЕ ЗАДАНЫ — уточнить у Сергея
+  enginPetr:            {name: Пётр Скорик,         tg: "@enginPetr",           auto: true,  away: false, hours: "09:00-18:00"}
 
 # Оценки 0-3 из матрицы. Порядок людей везде одинаковый.
 # ~ (null) = пустая ячейка в таблице.

@@ -57,6 +57,12 @@ if (bot.enforce_working_hours && !argv.includes('--force-hours') && !inWorkingHo
   process.exit(0);
 }
 
+// Текущее время МСК в минутах от полуночи — для персональных часов инженеров (engineers.<u>.hours).
+// --force-hours отключает фильтр по часам (null), чтобы офлайн-тест не был пустым вне смен.
+const NOW_MIN = argv.includes('--force-hours')
+  ? null
+  : (() => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: cfg.presence.tz })); return d.getHours() * 60 + d.getMinutes(); })();
+
 // --- Discourse API ---
 async function api(p, { method = 'GET', body, form } = {}) {
   if (!KEY) throw new Error('нет DISCOURSE_API_KEY (для офлайн-теста задайте --feed/--presence и --dry)');
@@ -224,7 +230,7 @@ for (const row of feed) {
   }
 
   const lang = detectLang(topic.title, topic.excerpt);
-  const candidates = poolFor(cfg, presence, lang === 'en'); // жёсткие гейты кодом
+  const candidates = poolFor(cfg, presence, lang === 'en', NOW_MIN); // гейты + персональные часы
 
   // 1) ИИ-оператор
   let decision = null;
@@ -253,7 +259,7 @@ for (const row of feed) {
   // 2) Правила (основной мозг при brain=rules, откат при brain=ai)
   if (!decision) {
     const cls = classify(cfg, topic);
-    const res = pick(cfg, presence, cls?.domain ?? null, lang === 'en');
+    const res = pick(cfg, presence, cls?.domain ?? null, lang === 'en', NOW_MIN);
     decision = { ...res, domain: cls?.domain ?? null, reason: cls ? `сигналы: ${cls.why.slice(0, 3).join(', ')}` : 'домен по сигналам не определён', tier: `правила: ${res.tier}` };
   }
 
@@ -278,6 +284,7 @@ for (const row of feed) {
       }
       state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: p.u };
       presence[p.u].load++;
+      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → ${p.u} · ${bot.mode === 'assign' ? 'НАЗНАЧЕН' : 'предложен'} [${decision.tier}${decision.domain ? ' · ' + decision.domain : ''}]`);
     } else {
       const duty = cfg.duty && lang !== 'en' ? cfg.duty : null;
       const text = `🤖 Автораспределение [${decision.tier}]: ${enStr}домен ${domStr}, ${decision.reason}. ` +
@@ -285,6 +292,7 @@ for (const row of feed) {
       if (bot.mode === 'assign' && duty) await assign(id, duty);
       await whisper(id, text);
       state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: duty };
+      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → ${duty ? 'дежурный ' + duty : 'РУЧНОЙ разбор'} [${decision.tier}]`);
     }
     acted++;
     saveState();
