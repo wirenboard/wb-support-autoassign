@@ -76,6 +76,10 @@ gates:
 
 # hours: персональная смена по МСК; вне неё инженеру темы не назначаются даже если он онлайн.
 # null → без ограничения (по глобальному окну presence.working_hours).
+# away: true — временно/отпуск, правится тут (нужен редеплой).
+# САМО-ПАУЗА без редеплоя: инженер вступает в группу портала «autoassign-paused»
+#   (Профиль → Группы → autoassign-paused → Join) — бот перестаёт давать ему темы;
+#   вышел из группы — снова в ротации. Флаг paused приходит из query 54.
 engineers:
   Bringer:              {name: Елена Савченко,      tg: "@Dominatorrrrr",       auto: false, away: false, hours: "10:00-19:00"}  # только EN
   BrainRoot:            {name: Андрей Радионов,     tg: "@brainroot",           auto: true,  away: false, hours: "10:00-19:00"}

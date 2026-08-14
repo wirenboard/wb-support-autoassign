@@ -181,6 +181,7 @@ for (const r of (presenceRows.rows ? toObjects(presenceRows) : presenceRows)) {
     minutes_since_seen: Number(r.minutes_since_seen),
     load: Number(r.recent_load ?? 0),
     open_assigned: Number(r.open_assigned ?? 0),
+    paused: r.paused === true || r.paused === 't' || String(r.paused).toLowerCase() === 'true',
   };
 }
 
@@ -195,7 +196,9 @@ const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, '
 const saveState = () => { if (!DRY) fs.writeFileSync(statePath, JSON.stringify(state, null, 1)); };
 
 // --- проход ---
-log(`режим ${bot.mode}, мозг ${BRAIN}${DRY ? ' [DRY]' : ''}; тем в фиде: ${feed.length}, инженеров: ${Object.keys(presence).length}`);
+const cfgEng = Object.keys(cfg.engineers);
+const pausedNow = cfgEng.filter(u => presence[u]?.paused).map(u => u);
+log(`режим ${bot.mode}, мозг ${BRAIN}${DRY ? ' [DRY]' : ''}; тем в фиде: ${feed.length}; инженеров ${cfgEng.length}${pausedNow.length ? ` (на паузе: ${pausedNow.join(', ')})` : ''}; в группе support ${Object.keys(presence).length}`);
 let acted = 0, skipped = 0;
 
 for (const row of feed) {
