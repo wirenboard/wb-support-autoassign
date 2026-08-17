@@ -103,22 +103,6 @@ async function assign(topicId, username) {
   await api('/assign/assign.json', { method: 'PUT', body: { target_id: topicId, target_type: 'Topic', username } });
 }
 
-// Спам: помечаем на ручную проверку, НИЧЕГО не закрываем и не удаляем.
-async function flagSpam(topic, verdict) {
-  const s = bot.spam ?? {};
-  const line = `🤖 Похоже на спам (score ${verdict.score}: ${verdict.signals.join(', ')}). ` +
-    `Не назначаю и не закрываю — проверьте и, если согласны, закройте вручную (скрытое «спам» + «Ключик»).`;
-  await whisper(topic.id, line);                       // 1) скрытое сообщение в теме
-  if (!DRY && s.review_log) {                           // 2) строка в лог на ревью
-    const rec = { id: topic.id, title: topic.title, url: topic.url, score: verdict.score, signals: verdict.signals, ts: new Date().toISOString() };
-    fs.appendFileSync(path.join(ROOT, s.review_log), JSON.stringify(rec) + '\n');
-  }
-  if (s.review_topic_id) {                               // 3) дубль в служебную тему-накопитель
-    const post = `🤖 Спам? [${topic.title}](${topic.url}) — score ${verdict.score}: ${verdict.signals.join(', ')}`;
-    if (DRY) log(`[dry] review-post в #${s.review_topic_id}: ${post}`);
-    else await api('/posts.json', { method: 'POST', body: { topic_id: s.review_topic_id, raw: post } });
-  }
-}
 
 // --- ИИ-оператор ---
 // Получает тему и УЖЕ отфильтрованных кандидатов (гейты пройдены кодом),
@@ -219,19 +203,9 @@ for (const row of feed) {
     url: row.topic_url,
   };
 
-  // Спам-фильтр — до маршрутизации. Помечаем и пропускаем (не назначаем).
-  if (bot.spam?.enabled) {
-    const verdict = detectSpam(topic);
-    if (verdict.isSpam) {
-      try {
-        await flagSpam(topic, verdict);
-        state.processed[id] = { ts: new Date().toISOString(), spam: true, score: verdict.score };
-        acted++; saveState();
-        log(`#${id} помечен как спам (score ${verdict.score})`);
-      } catch (e) { log(`#${id} спам-пометка не удалась: ${e.message}`); }
-      continue;
-    }
-  }
+  // Спам определяем, но НЕ пропускаем: спам тоже назначаем инженеру (он закроет),
+  // просто добавляем в скрытое сообщение пометку «похоже на спам».
+  const spam = bot.spam?.enabled ? detectSpam(topic) : { isSpam: false };
 
   const lang = detectLang(topic.title, topic.excerpt);
   const candidates = poolFor(cfg, presence, lang === 'en', NOW_MIN); // гейты + персональные часы
@@ -293,7 +267,10 @@ for (const row of feed) {
     if (decision.pick) {
       const p = decision.pick;
       const verb = bot.mode === 'assign' ? 'назначаю' : 'предлагаю';
-      const text = `🤖 Автораспределение [${decision.tier}]: ${enStr}${verb} **@${p.u}** — домен ${domStr}, ${decision.reason}. ` +
+      const spamNote = spam.isSpam
+        ? `⚠️ Похоже на спам (score ${spam.score}: ${spam.signals.join(', ')}). Если согласны — закройте тему (скрытое «спам» + «Ключик»).\n`
+        : '';
+      const text = spamNote + `🤖 Автораспределение [${decision.tier}]: ${enStr}${verb} **@${p.u}** — домен ${domStr}, ${decision.reason}. ` +
         `В сети ${Math.round(p.minutes_since_seen)} мин назад, загрузка ${p.load} тем за ${cfg.load.window_days} дн.` +
         (alts ? `\nАльтернативы: ${alts}.` : '') +
         `\nЕсли мимо — назначьте вручную, бот эту тему больше не тронет.`;
@@ -303,18 +280,16 @@ for (const row of feed) {
       } else {
         await whisper(id, text);
       }
-      state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: p.u };
+      state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: p.u, spam: spam.isSpam };
       presence[p.u].load++;
       state.lastAssignees = [...state.lastAssignees, p.u].slice(-5);   // хвост для антистрика
-      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → ${p.u} · ${bot.mode === 'assign' ? 'НАЗНАЧЕН' : 'предложен'} [${decision.tier}${decision.domain ? ' · ' + decision.domain : ''}]`);
+      log(`#${id}${pm ? ' [ЛС]' : ''}${spam.isSpam ? ' [СПАМ?]' : ''} «${topic.title.slice(0, 45)}» → ${p.u} · ${bot.mode === 'assign' ? 'НАЗНАЧЕН' : 'предложен'} [${decision.tier}${decision.domain ? ' · ' + decision.domain : ''}]  ${topic.url}`);
     } else {
-      const duty = cfg.duty && lang !== 'en' ? cfg.duty : null;
-      const text = `🤖 Автораспределение [${decision.tier}]: ${enStr}домен ${domStr}, ${decision.reason}. ` +
-        (duty ? `Отдаю дежурному @${duty}.` : 'Нужен ручной разбор.');
-      if (bot.mode === 'assign' && duty) await assign(id, duty);
-      await whisper(id, text);
-      state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: duty };
-      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → ${duty ? 'дежурный ' + duty : 'РУЧНОЙ разбор'} [${decision.tier}]`);
+      // Ручной разбор исключён. pick=null означает, что сейчас в сети/смене никого нет
+      // (все офлайн, вне часов или на паузе) — откладываем: НЕ помечаем обработанной,
+      // тема вернётся в следующий проход, когда кто-то выйдет онлайн.
+      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → отложено — никого в сети/смене, повтор в след. проход  ${topic.url}`);
+      continue;   // без acted++/saveState — тема остаётся неразобранной
     }
     acted++;
     saveState();
