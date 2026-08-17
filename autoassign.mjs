@@ -181,6 +181,7 @@ for (const r of (presenceRows.rows ? toObjects(presenceRows) : presenceRows)) {
     minutes_since_seen: Number(r.minutes_since_seen),
     load: Number(r.recent_load ?? 0),
     open_assigned: Number(r.open_assigned ?? 0),
+    paused: r.paused === true || r.paused === 't' || String(r.paused).toLowerCase() === 'true',
   };
 }
 
@@ -192,10 +193,13 @@ const feed = feedRaw.rows ? toObjects(feedRaw) : feedRaw;
 const statePath = path.join(ROOT, bot.state_file ?? 'state.json');
 fs.mkdirSync(path.dirname(statePath), { recursive: true });   // data/ на volume может не существовать
 const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : { processed: {} };
+if (!Array.isArray(state.lastAssignees)) state.lastAssignees = [];   // хвост последних назначений (антистрик)
 const saveState = () => { if (!DRY) fs.writeFileSync(statePath, JSON.stringify(state, null, 1)); };
 
 // --- проход ---
-log(`режим ${bot.mode}, мозг ${BRAIN}${DRY ? ' [DRY]' : ''}; тем в фиде: ${feed.length}, инженеров: ${Object.keys(presence).length}`);
+const cfgEng = Object.keys(cfg.engineers);
+const pausedNow = cfgEng.filter(u => presence[u]?.paused).map(u => u);
+log(`режим ${bot.mode}, мозг ${BRAIN}${DRY ? ' [DRY]' : ''}; тем в фиде: ${feed.length}; инженеров ${cfgEng.length}${pausedNow.length ? ` (на паузе: ${pausedNow.join(', ')})` : ''}; в группе support ${Object.keys(presence).length}`);
 let acted = 0, skipped = 0;
 
 for (const row of feed) {
@@ -263,6 +267,23 @@ for (const row of feed) {
     decision = { ...res, domain: cls?.domain ?? null, reason: cls ? `сигналы: ${cls.why.slice(0, 3).join(', ')}` : 'домен по сигналам не определён', tier: `правила: ${res.tier}` };
   }
 
+  // Антистрик: не назначать 3+ подряд одному. Если последние maxStreak назначений —
+  // все на выбранного, перекидываем на следующего кандидата (если он есть).
+  const maxStreak = bot.max_consecutive_per_user ?? 0;
+  if (maxStreak && decision.pick) {
+    const tail = state.lastAssignees.slice(-maxStreak);
+    const streaked = tail.length === maxStreak && tail.every(u => u === decision.pick.u);
+    if (streaked) {
+      const alt = (decision.cand ?? []).find(c => c.u !== decision.pick.u);
+      if (alt) {
+        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд — перекидываю на ${alt.u}`);
+        decision = { ...decision, pick: alt, tier: decision.tier + ' · антистрик' };
+      } else {
+        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд, но замены в пуле нет — оставляю`);
+      }
+    }
+  }
+
   const enStr = lang === 'en' ? 'тема на английском → EN-пул. ' : '';
   const domStr = decision.domain ? `\`${decision.domain}\`` : 'не определён';
   const alts = (decision.cand ?? []).filter(c => c.u !== decision.pick?.u).slice(0, 2)
@@ -284,6 +305,7 @@ for (const row of feed) {
       }
       state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: p.u };
       presence[p.u].load++;
+      state.lastAssignees = [...state.lastAssignees, p.u].slice(-5);   // хвост для антистрика
       log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → ${p.u} · ${bot.mode === 'assign' ? 'НАЗНАЧЕН' : 'предложен'} [${decision.tier}${decision.domain ? ' · ' + decision.domain : ''}]`);
     } else {
       const duty = cfg.duty && lang !== 'en' ? cfg.duty : null;
