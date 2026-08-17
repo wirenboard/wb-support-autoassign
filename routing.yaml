@@ -50,6 +50,8 @@ bot:
                              # членства в группе (support_bot в support). null → admin-эндпоинт.
   feed_days: 4
   min_topic_age_minutes: 15  # молодые темы не трогаем — шанс взять руками
+  max_consecutive_per_user: 2  # не назначать 3+ темы подряд одному; 3-ю перекинуть на др.
+                               # кандидата. Стрик считается по последним назначениям (state).
   enforce_working_hours: true
   explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
   state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
@@ -77,9 +79,10 @@ gates:
 # hours: персональная смена по МСК; вне неё инженеру темы не назначаются даже если он онлайн.
 # null → без ограничения (по глобальному окну presence.working_hours).
 # away: true — временно/отпуск, правится тут (нужен редеплой).
-# САМО-ПАУЗА без редеплоя: инженер вступает в группу портала «autoassign-paused»
-#   (Профиль → Группы → autoassign-paused → Join) — бот перестаёт давать ему темы;
-#   вышел из группы — снова в ротации. Флаг paused приходит из query 54.
+# САМО-ПАУЗА без редеплоя: инженер включает «Не беспокоить» (Do Not Disturb) в меню
+#   профиля (луна) — на 30мин/1ч/2ч/до завтра/свой срок. Пока DND активен, бот его
+#   пропускает; сам снимется по таймеру или вручную. Флаг paused приходит из query 54
+#   (EXISTS активного do_not_disturb_timings). Группу autoassign-paused больше не используем.
 engineers:
   Bringer:              {name: Елена Савченко,      tg: "@Dominatorrrrr",       auto: false, away: false, hours: "10:00-19:00"}  # только EN
   BrainRoot:            {name: Андрей Радионов,     tg: "@brainroot",           auto: true,  away: false, hours: "10:00-19:00"}
