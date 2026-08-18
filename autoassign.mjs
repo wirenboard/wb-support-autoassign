@@ -115,9 +115,12 @@ async function decideAI(topic, lang, candidates) {
   const skillsOf = u => Object.entries(cfg.skills)
     .map(([d, m]) => (m[u] ?? 0) >= 2 ? `${d}:${m[u]}` : null)
     .filter(Boolean).join(', ');
-  const table = candidates.map(c =>
-    `- ${c.u}: в сети ${Math.round(c.minutes_since_seen)} мин назад, загрузка ${c.load} тем за ${cfg.load.window_days} дн; навыки (2=разберётся, 3=эксперт): ${skillsOf(c.u) || 'нет данных'}`
-  ).join('\n');
+  const table = candidates.map(c => {
+    const biased = (c.effLoad ?? c.load) !== c.load;   // load_bias>0 — просят реже грузить
+    return `- ${c.u}: в сети ${Math.round(c.minutes_since_seen)} мин назад, загрузка ${c.load} тем за ${cfg.load.window_days} дн` +
+      `${biased ? ` (для балансировки считай как ${c.effLoad} — этого инженера грузить реже)` : ''}` +
+      `; навыки (2=разберётся, 3=эксперт): ${skillsOf(c.u) || 'нет данных'}`;
+  }).join('\n');
 
   const sys =
     'Ты — диспетчер техподдержки Wiren Board (контроллеры и Modbus-периферия для автоматизации). ' +
@@ -161,9 +164,12 @@ const presenceRows = flag('--presence')
   : await runQuery(bot.presence_query, { window_days: String(cfg.load.window_days) });
 const presence = {};
 for (const r of (presenceRows.rows ? toObjects(presenceRows) : presenceRows)) {
+  const load = Number(r.recent_load ?? 0);
+  const bias = Number(cfg.engineers[r.username]?.load_bias ?? 0);   // +N виртуальных тем = ниже приоритет
   presence[r.username] = {
     minutes_since_seen: Number(r.minutes_since_seen),
-    load: Number(r.recent_load ?? 0),
+    load,                       // реальная загрузка за окно (для лога/уведомления — честная)
+    effLoad: load + bias,       // виртуальная — только для ранжирования (load_bias в routing.yaml)
     open_assigned: Number(r.open_assigned ?? 0),
     paused: r.paused === true || r.paused === 't' || String(r.paused).toLowerCase() === 'true',
   };
@@ -250,12 +256,18 @@ for (const row of feed) {
     const tail = state.lastAssignees.slice(-maxStreak);
     const streaked = tail.length === maxStreak && tail.every(u => u === decision.pick.u);
     if (streaked) {
-      const alt = (decision.cand ?? []).find(c => c.u !== decision.pick.u);
+      // сначала равный по уровню (тот же tier), иначе — наименее загруженный из всех в сети,
+      // чтобы поток не залипал на одном человеке даже в доменах с единственным экспертом.
+      const byLoad = [...candidates].sort((a, b) =>
+        ((a.effLoad ?? a.load) - (b.effLoad ?? b.load)) || (a.minutes_since_seen - b.minutes_since_seen));
+      const alt = (decision.cand ?? []).find(c => c.u !== decision.pick.u)
+               ?? byLoad.find(c => c.u !== decision.pick.u);
       if (alt) {
-        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд — перекидываю на ${alt.u}`);
-        decision = { ...decision, pick: alt, tier: decision.tier + ' · антистрик' };
+        const crossTier = !(decision.cand ?? []).some(c => c.u === alt.u);
+        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд — перекидываю на ${alt.u}${crossTier ? ' (по загрузке)' : ''}`);
+        decision = { ...decision, pick: alt, tier: decision.tier + ' · антистрик' + (crossTier ? '→загрузка' : '') };
       } else {
-        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд, но замены в пуле нет — оставляю`);
+        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд, но в сети больше никого — оставляю`);
       }
     }
   }

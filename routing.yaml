@@ -22,9 +22,9 @@ thresholds:
 
 presence:
   online_within_minutes: 45    # last_seen_at не старше → считаем «в сети»
-  working_hours: "07:30-20:00" # ГЛОБАЛЬНОЕ окно бота = объединение всех смен (Кузнецов с 7:30,
-                               # Кильпио до 20:00). Вне него бот вообще не работает. Персональные
-                               # смены — в engineers.<u>.hours, они и режут кандидатов внутри окна.
+  working_hours: "08:00-20:00" # ГЛОБАЛЬНОЕ окно бота = объединение всех смен (сейчас 08:00 —
+                               # Хлебников/Курятников/Жабровец, до 20:00 — Кильпио). Вне него бот
+                               # не работает. Персональные смены — в engineers.<u>.hours, режут внутри окна.
   tz: Europe/Moscow
   # last_seen_at не знает про отпуска. Пока: ручной флаг away в engineers.
   # Дальше можно цеплять календарь отпусков, если он есть в машиночитаемом виде.
@@ -50,8 +50,8 @@ bot:
                              # членства в группе (support_bot в support). null → admin-эндпоинт.
   feed_days: 4
   min_topic_age_minutes: 15  # молодые темы не трогаем — шанс взять руками
-  max_consecutive_per_user: 2  # не назначать 3+ темы подряд одному; 3-ю перекинуть на др.
-                               # кандидата. Стрик считается по последним назначениям (state).
+  max_consecutive_per_user: 1  # не назначать 2+ темы подряд одному; следующую перекинуть на
+                               # наименее загруженного из онлайна. Стрик — по последним назначениям (state).
   enforce_working_hours: true
   explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
   state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
@@ -76,6 +76,9 @@ gates:
 # hours: персональная смена по МСК; вне неё инженеру темы не назначаются даже если он онлайн.
 # null → без ограничения (по глобальному окну presence.working_hours).
 # away: true — временно/отпуск, правится тут (нужен редеплой).
+# load_bias: N — виртуальные +N тем к загрузке ТОЛЬКО для ранжирования (в логе загрузка честная).
+#   Понижает приоритет: внутри уровня инженера выберут, лишь когда у других на N+ тем больше.
+#   Видят и правила, и ИИ-оператор. 0/нет = обычный приоритет. Крутить и редеплоить.
 # САМО-ПАУЗА без редеплоя: инженер включает «Не беспокоить» (Do Not Disturb) в меню
 #   профиля (луна) — на 30мин/1ч/2ч/до завтра/свой срок. Пока DND активен, бот его
 #   пропускает; сам снимется по таймеру или вручную. Флаг paused приходит из query 54
@@ -87,8 +90,8 @@ engineers:
   DmitryKur:            {name: Дмитрий Курятников,  tg: "@dmitykur",            auto: true,  away: false, hours: "08:00-17:00"}
   JackDallas:           {name: Александр Кильпио,   tg: "@jackdallas",          auto: false, away: false, hours: "11:00-20:00"}  # только EN
   Alexey_Zhabrovets:    {name: Алексей Жабровец,    tg: "@alexey_zhabrovets",   auto: true,  away: false, hours: "08:00-16:00"}
-  Alexander_Kuznetsov:  {name: Александр Кузнецов,  tg: "@wonder_over_yonder",  auto: true,  away: false, hours: "07:30-16:00"}  # EN + общая
-  Understarfall:        {name: Сергей Шишенко,      tg: "@understarfall",       auto: true,  away: false, hours: null}          # ЧАСЫ НЕ ЗАДАНЫ — уточнить у Сергея
+  Alexander_Kuznetsov:  {name: Александр Кузнецов,  tg: "@wonder_over_yonder",  auto: true,  away: false, hours: "08:30-16:00", load_bias: 3}  # EN + общая; старт +1ч + load_bias 3 (магнитил темы: modbus=3 + EN + ранний старт)
+  Understarfall:        {name: Сергей Шишенко,      tg: "@understarfall",       auto: true,  away: false, hours: "10:00-18:00"}
   enginPetr:            {name: Пётр Скорик,         tg: "@enginPetr",           auto: true,  away: false, hours: "09:00-18:00"}
 
 # Оценки 0-3 из матрицы. Порядок людей везде одинаковый.
