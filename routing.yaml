@@ -50,8 +50,8 @@ bot:
                              # членства в группе (support_bot в support). null → admin-эндпоинт.
   feed_days: 4
   min_topic_age_minutes: 15  # молодые темы не трогаем — шанс взять руками
-  max_consecutive_per_user: 2  # не назначать 3+ темы подряд одному; 3-ю перекинуть на др.
-                               # кандидата. Стрик считается по последним назначениям (state).
+  max_consecutive_per_user: 1  # не назначать 2+ темы подряд одному; следующую перекинуть на
+                               # наименее загруженного из онлайна. Стрик — по последним назначениям (state).
   enforce_working_hours: true
   explain_assign: true       # в режиме assign дублировать причину скрытым сообщением
   state_file: data/state.json   # рантайм-состояние (в Docker — на volume ./data)
