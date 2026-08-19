@@ -98,37 +98,37 @@ engineers:
 # ~ (null) = пустая ячейка в таблице.
 skills:
   #                 Bringer BrainRoot Khlebnikov DmitryKur JackDallas Zhabrovets Kuznetsov Understarfall enginPetr
-  modbus:          {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 3, JackDallas: 3, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 3, Understarfall: 3, enginPetr: 2}
+  modbus:          {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 3, JackDallas: 3, Alexey_Zhabrovets: 3, Alexander_Kuznetsov: 3, Understarfall: 3, enginPetr: 2}
   mqtt:            {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 3, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
   wb-rules:        {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 1}
-  linux:           {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 3, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 1, enginPetr: 2}
+  linux:           {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 3, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 1, enginPetr: 2}
   # backup: со слов юзера тянут Хлебников и Радионов (3); linux-компетентным — резерв 2
   backup:          {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 3, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
   network:         {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: 2}
-  zigbee:          {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
-  zwave:           {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 0, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
+  zigbee:          {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  zwave:           {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 0, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
   knx:             {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: 1, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 3, Understarfall: 0, enginPetr: ~}
-  dali:            {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: 0, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: 0}
+  dali:            {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 0, JackDallas: 0, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: 0}
   snmp:            {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 1, Understarfall: 1, enginPetr: ~}
   bacnet:          {Bringer: ~, BrainRoot: ~, Aleksandr_Khlebnikov: 0, DmitryKur: 0, JackDallas: ~, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 3, Understarfall: 0, enginPetr: ~}
   spodes:          {Bringer: 1, BrainRoot: 1, Aleksandr_Khlebnikov: 0, DmitryKur: 2, JackDallas: ~, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
-  home-assistant:  {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
+  home-assistant:  {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 2, Understarfall: 2, enginPetr: 2}
   node-red:        {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
   grafana:         {Bringer: ~, BrainRoot: 1, Aleksandr_Khlebnikov: 3, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 0, Understarfall: 1, enginPetr: ~}
   zabbix:          {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: 1}
-  alisa:           {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: ~}
+  alisa:           {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 3, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 1, Understarfall: 2, enginPetr: ~}
   codesys-iec:     {Bringer: 3, BrainRoot: ~, Aleksandr_Khlebnikov: 0, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 3, Understarfall: 3, enginPetr: 1}
   electrical:      {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 1, Understarfall: 3, enginPetr: 2}
-  wb6-legacy:      {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 0, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: 1}
-  wb-modems:       {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
-  wbio:            {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
-  internal-modules: {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
-  cloud:           {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
-  map:             {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 1, Understarfall: 0, enginPetr: ~}
-  mwac:            {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 3, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
-  hw-selection:    {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: ~}
-  heating:         {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 1, Understarfall: 3, enginPetr: ~}
-  batteries:       {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: ~, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: ~}
+  wb6-legacy:      {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 1, JackDallas: 3, Alexey_Zhabrovets: 0, Alexander_Kuznetsov: 0, Understarfall: 0, enginPetr: 1}
+  wb-modems:       {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 1, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  wbio:            {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  internal-modules: {Bringer: 2, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  cloud:           {Bringer: 1, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 0, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 2, Understarfall: 0, enginPetr: ~}
+  map:             {Bringer: 2, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 1, Understarfall: 0, enginPetr: ~}
+  mwac:            {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 3, DmitryKur: 3, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: ~}
+  hw-selection:    {Bringer: 3, BrainRoot: 3, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 2, Alexey_Zhabrovets: 2, Alexander_Kuznetsov: 2, Understarfall: 3, enginPetr: ~}
+  heating:         {Bringer: 1, BrainRoot: 2, Aleksandr_Khlebnikov: 1, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 1, Understarfall: 3, enginPetr: ~}
+  batteries:       {Bringer: ~, BrainRoot: 2, Aleksandr_Khlebnikov: 2, DmitryKur: 2, JackDallas: 1, Alexey_Zhabrovets: 1, Alexander_Kuznetsov: 0, Understarfall: 2, enginPetr: ~}
 
 # Как тема попадает в домен. Порядок сигналов:
 #   1. теги (если уже стоят), 2. категория, 3. ключевые слова в заголовке+первом посте,
