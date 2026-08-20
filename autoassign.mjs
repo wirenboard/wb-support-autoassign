@@ -191,6 +191,7 @@ const cfgEng = Object.keys(cfg.engineers);
 const pausedNow = cfgEng.filter(u => presence[u]?.paused).map(u => u);
 log(`режим ${bot.mode}, мозг ${BRAIN}${DRY ? ' [DRY]' : ''}; тем в фиде: ${feed.length}; инженеров ${cfgEng.length}${pausedNow.length ? ` (на паузе: ${pausedNow.join(', ')})` : ''}; в группе support ${Object.keys(presence).length}`);
 let acted = 0, skipped = 0;
+const perPass = {};   // сколько тем назначено кому за ЭТОТ проход (анти-навал); процесс живёт один проход
 
 for (const row of feed) {
   const id = row.id;
@@ -266,9 +267,26 @@ for (const row of feed) {
         const crossTier = !(decision.cand ?? []).some(c => c.u === alt.u);
         log(`#${id} ${decision.pick.u}: ${maxStreak} подряд — перекидываю на ${alt.u}${crossTier ? ' (по загрузке)' : ''}`);
         decision = { ...decision, pick: alt, tier: decision.tier + ' · антистрик' + (crossTier ? '→загрузка' : '') };
-      } else {
-        log(`#${id} ${decision.pick.u}: ${maxStreak} подряд, но в сети больше никого — оставляю`);
       }
+      // alt нет (в сети больше никого) — pick оставляем как есть; лимит довершит анти-навал ниже
+    }
+  }
+
+  // Анти-навал: за один проход не наваливаем на одного больше N тем (против утреннего залпа,
+  // когда онлайн один человек и на него сыплется весь ночной хвост). Есть другой онлайн под
+  // лимитом → отдаём наименее загруженному из них; заменить некем → тему откладываем (вернётся
+  // в следующий проход, когда подключится коллега или сбросится счётчик прохода).
+  const maxPass = bot.max_per_pass_per_user ?? 0;
+  if (maxPass && decision.pick && (perPass[decision.pick.u] ?? 0) >= maxPass) {
+    const under = [...candidates]
+      .filter(c => c.u !== decision.pick.u && (perPass[c.u] ?? 0) < maxPass)
+      .sort((a, b) => ((a.effLoad ?? a.load) - (b.effLoad ?? b.load)) || (a.minutes_since_seen - b.minutes_since_seen));
+    if (under.length) {
+      log(`#${id} ${decision.pick.u}: уже ${perPass[decision.pick.u]} за проход — перекидываю на ${under[0].u}`);
+      decision = { ...decision, pick: under[0], tier: decision.tier + ' · анти-навал' };
+    } else {
+      log(`#${id} ${decision.pick.u}: уже ${perPass[decision.pick.u]} за проход, заменить некем — откладываю  ${topic.url}`);
+      decision = { ...decision, pick: null, defer: true };
     }
   }
 
@@ -296,13 +314,15 @@ for (const row of feed) {
       }
       state.processed[id] = { ts: new Date().toISOString(), mode: bot.mode, brain: decision.tier, user: p.u, spam: spam.isSpam };
       presence[p.u].load++;
+      perPass[p.u] = (perPass[p.u] ?? 0) + 1;   // учёт для анти-навала (в этом проходе)
       state.lastAssignees = [...state.lastAssignees, p.u].slice(-5);   // хвост для антистрика
       log(`#${id}${pm ? ' [ЛС]' : ''}${spam.isSpam ? ' [СПАМ?]' : ''} «${topic.title.slice(0, 45)}» → ${p.u} · ${bot.mode === 'assign' ? 'НАЗНАЧЕН' : 'предложен'} [${decision.tier}${decision.domain ? ' · ' + decision.domain : ''}]  ${topic.url}`);
     } else {
-      // Ручной разбор исключён. pick=null означает, что сейчас в сети/смене никого нет
-      // (все офлайн, вне часов или на паузе) — откладываем: НЕ помечаем обработанной,
-      // тема вернётся в следующий проход, когда кто-то выйдет онлайн.
-      log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → отложено — никого в сети/смене, повтор в след. проход  ${topic.url}`);
+      // pick=null: либо в сети/смене реально никого (пустой пул), либо анти-навал отложил,
+      // чтобы не грузить одного (decision.defer — уже залогировано выше). Тему НЕ помечаем
+      // обработанной — вернётся в следующий проход.
+      if (!decision.defer)
+        log(`#${id}${pm ? ' [ЛС]' : ''} «${topic.title.slice(0, 45)}» → отложено — никого в сети/смене, повтор в след. проход  ${topic.url}`);
       continue;   // без acted++/saveState — тема остаётся неразобранной
     }
     acted++;
